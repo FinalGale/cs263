@@ -10,6 +10,7 @@ The primary outcome is an explanation of *why* performance differs: branch behav
 - [Experiment design](docs/experiment-design.md): comparisons, controls, measurements, and feasibility gates.
 - [Decision log](docs/decisions.md): choices that still need evidence or a team decision.
 - [Agent instructions](AGENTS.md): rules for reproducible work in this repository.
+- [Repository skills](.agents/skills/): focused workflows for CPython builds, gem5 runs, and result analysis.
 
 ## Current status
 

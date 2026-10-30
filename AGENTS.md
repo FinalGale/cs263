@@ -2,6 +2,8 @@
 
 This repository is a reproducible computer architecture experiment. Before changing code or plans, read `README.md`, `docs/project-plan.md`, `docs/experiment-design.md`, and `docs/decisions.md` as relevant to the task.
 
+Use the repository skills when working on their corresponding tasks: `cpython-build-matrix` for engine builds, `gem5-experiment` for simulator runs, and `analyze-results` for analysis. Their instructions live under `.agents/skills/`.
+
 ## Work in small, reviewable steps
 
 1. State the research question or implementation goal for the change.
