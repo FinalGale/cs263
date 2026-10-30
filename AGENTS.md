@@ -4,6 +4,8 @@ This repository is a reproducible computer architecture experiment. Before chang
 
 Use the repository skills when working on their corresponding tasks: `cpython-build-matrix` for engine builds, `gem5-experiment` for simulator runs, and `analyze-results` for analysis. Their instructions live under `.agents/skills/`.
 
+Use `systematic-debugging` for failed or unexpected build, simulation, benchmark, or analysis behavior. Use `verification-before-completion` before reporting a completed implementation or measured result.
+
 ## Work in small, reviewable steps
 
 1. State the research question or implementation goal for the change.
