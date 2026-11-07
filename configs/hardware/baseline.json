@@ -1,0 +1,87 @@
+{
+  "name": "baseline-proposal-v0",
+  "status": "proposal",
+  "note": "Proposed starting point for feasibility runs only. D6 in docs/decisions.md is open; values follow gem5 v26 stdlib/O3 defaults except where 'deviations' says otherwise.",
+  "deviations_from_gem5_defaults": [
+    "All cache prefetchers disabled (stdlib L1/L2 classes default to StridePrefetcher) so cache sweeps are not confounded by prefetch behavior.",
+    "Cache associativity and latencies are written out explicitly instead of inherited, so a size sweep cannot silently change them."
+  ],
+  "isa": "X86",
+  "mode": "SE",
+  "cpu": {
+    "type": "O3",
+    "num_cores": 1,
+    "clock": "3GHz"
+  },
+  "branch_predictor": {
+    "conditional": {
+      "class": "TournamentBP",
+      "params": {
+        "localPredictorSize": 2048,
+        "localCtrBits": 2,
+        "localHistoryTableSize": 2048,
+        "globalPredictorSize": 8192,
+        "globalCtrBits": 2,
+        "choicePredictorSize": 8192,
+        "choiceCtrBits": 2
+      }
+    },
+    "btb": {
+      "class": "SimpleBTB",
+      "params": {
+        "numEntries": 4096,
+        "tagBits": 16,
+        "associativity": 1
+      }
+    },
+    "ras": {
+      "params": {
+        "numEntries": 16
+      }
+    },
+    "indirect": {
+      "class": "SimpleIndirectPredictor",
+      "params": {
+        "indirectSets": 256,
+        "indirectWays": 2,
+        "indirectTagSize": 16
+      }
+    }
+  },
+  "caches": {
+    "l1i": {
+      "size": "32KiB",
+      "assoc": 8,
+      "tag_latency": 1,
+      "data_latency": 1,
+      "response_latency": 1,
+      "mshrs": 16,
+      "tgts_per_mshr": 20,
+      "prefetcher": "none"
+    },
+    "l1d": {
+      "size": "32KiB",
+      "assoc": 8,
+      "tag_latency": 1,
+      "data_latency": 1,
+      "response_latency": 1,
+      "mshrs": 16,
+      "tgts_per_mshr": 20,
+      "prefetcher": "none"
+    },
+    "l2": {
+      "size": "1MiB",
+      "assoc": 16,
+      "tag_latency": 10,
+      "data_latency": 10,
+      "response_latency": 1,
+      "mshrs": 20,
+      "tgts_per_mshr": 12,
+      "prefetcher": "none"
+    }
+  },
+  "memory": {
+    "class": "SingleChannelDDR4_2400",
+    "size": "2GiB"
+  }
+}
