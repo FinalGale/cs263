@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # gem5 simulator image for the CS 263 CPython engine study.
 #
 # Builds gem5 for the X86 guest ISA (syscall-emulation capable) plus an
@@ -57,16 +58,25 @@ RUN set -eux; \
 WORKDIR /opt/gem5
 
 # gem5 simulator binary. --ignore-style skips the git-hook installer.
-RUN set -eux; \
-    scons --ignore-style "build/${GEM5_ISA}/gem5.${GEM5_VARIANT}" -j"${JOBS}"; \
-    ln -s "/opt/gem5/build/${GEM5_ISA}/gem5.${GEM5_VARIANT}" /usr/local/bin/gem5; \
+# --limit-ld-memory-usage passes -Wl,--no-keep-memory to the default bfd
+# linker: the final link of gem5.opt was OOM-killed in an 8 GB Docker VM
+# without it. The object directory is a BuildKit cache mount so a failed link
+# does not discard the compile; scons tracks dependencies, and the finished
+# binary is copied out of the mount into the image.
+RUN --mount=type=cache,id=cs263-gem5-scons-build,target=/opt/gem5/build \
+    set -eux; \
+    scons --ignore-style --limit-ld-memory-usage \
+        "build/${GEM5_ISA}/gem5.${GEM5_VARIANT}" -j"${JOBS}"; \
+    mkdir -p /opt/gem5/bin; \
+    cp "build/${GEM5_ISA}/gem5.${GEM5_VARIANT}" "/opt/gem5/bin/gem5.${GEM5_ISA}.${GEM5_VARIANT}"; \
+    ln -s "/opt/gem5/bin/gem5.${GEM5_ISA}.${GEM5_VARIANT}" /usr/local/bin/gem5; \
     gem5 --version 2>&1 | tail -n 5 || true
 
 # libm5 / m5 utility for the x86-64 guest, used later for region-of-interest
 # markers (m5_work_begin/m5_work_end, m5_reset_stats/m5_dump_stats).
 RUN set -eux; \
     cd util/m5; \
-    scons --ignore-style build/x86/out/m5 build/x86/out/libm5.a \
+    scons build/x86/out/m5 build/x86/out/libm5.a \
         x86.CROSS_COMPILE=x86_64-linux-gnu- -j"${JOBS}"
 
 # Image manifest: exact inputs, recorded inside the image for run manifests.

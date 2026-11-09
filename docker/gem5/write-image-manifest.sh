@@ -18,7 +18,7 @@ jq -n \
   --arg gem5_commit "$(git rev-parse HEAD)" \
   --arg gem5_isa "${GEM5_ISA}" \
   --arg gem5_variant "${GEM5_VARIANT}" \
-  --arg gem5_binary "/opt/gem5/build/${GEM5_ISA}/gem5.${GEM5_VARIANT}" \
+  --arg gem5_binary "/opt/gem5/bin/gem5.${GEM5_ISA}.${GEM5_VARIANT}" \
   --arg host_arch "$(dpkg --print-architecture)" \
   --arg host_cc "$(gcc --version | head -n 1)" \
   --arg host_cxx "$(g++ --version | head -n 1)" \
@@ -33,6 +33,7 @@ jq -n \
      built_at: $built_at,
      gem5: {repo: $gem5_repo, commit: $gem5_commit, isa: $gem5_isa,
             variant: $gem5_variant, binary: $gem5_binary,
+            scons_flags: "--ignore-style --limit-ld-memory-usage", linker: "bfd (GNU ld, default)",
             host_arch: $host_arch},
      toolchain: {host_cc: $host_cc, host_cxx: $host_cxx, scons: $scons,
                  host_python: $host_python, guest_cc: $guest_cc},

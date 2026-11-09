@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build the smoke workload for the x86-64 guest. Run inside the gem5 image:
-#   docker run --rm -v "$PWD":/work cs263-gem5:v26.0.0.0-x86-opt benchmarks/smoke/build.sh
+#   docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/work cs263-gem5:v26.0.0.0-x86-opt benchmarks/smoke/build.sh
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 out=build/benchmarks/smoke

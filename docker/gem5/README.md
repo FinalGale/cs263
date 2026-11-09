@@ -1,12 +1,12 @@
 # gem5 container
 
-A pinned image containing gem5 built for the **X86 guest ISA** (`build/X86/gem5.opt`), an x86-64 cross-compiler for guest programs, and the x86-64 `m5` utility and `libm5.a` for future region-of-interest markers.
+A pinned image containing gem5 built for the **X86 guest ISA** (`build/X86/gem5.opt`, installed as `/opt/gem5/bin/gem5.X86.opt`), an x86-64 cross-compiler for guest programs, and the x86-64 `m5` utility and `libm5.a` for future region-of-interest markers.
 
 | Input | Pinned value |
 | --- | --- |
 | Base image | `ubuntu:24.04` at `sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852` |
 | gem5 | `v26.0.0.0`, commit `fed0e07e930fecf1e73dce94dd44e69a5bf70c46` |
-| gem5 build | `build/X86/gem5.opt` |
+| gem5 build | `scons --ignore-style --limit-ld-memory-usage build/X86/gem5.opt`, default bfd linker |
 | Guest compiler | Ubuntu `gcc-x86-64-linux-gnu` (exact version in the image manifest) |
 | apt packages | Snapshot `20261101T000000Z` on amd64 hosts; live mirror on arm64 hosts (see limits) |
 
@@ -29,7 +29,7 @@ docker run --rm cs263-gem5:v26.0.0.0-x86-opt cat /opt/manifest/image.json
 ## Smoke test
 
 ```sh
-docker run --rm -v "$PWD":/work cs263-gem5:v26.0.0.0-x86-opt benchmarks/smoke/build.sh
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/work cs263-gem5:v26.0.0.0-x86-opt benchmarks/smoke/build.sh
 scripts/run_gem5.py --label smoke-collatz \
     --binary build/benchmarks/smoke/collatz \
     --expected-stdout benchmarks/smoke/expected_stdout.txt -- 20000

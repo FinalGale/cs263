@@ -47,7 +47,7 @@ REQUIRED_COUNTERS = [
     "simTicks",
     "simInsts",
     "board.processor.cores.core.numCycles",
-    "board.processor.cores.core.branchPred.lookups",
+    "board.processor.cores.core.branchPred.lookups_0::total",
     "board.processor.cores.core.branchPred.condIncorrect",
     "board.cache_hierarchy.l1i-cache-0.overallMisses::total",
     "board.cache_hierarchy.l1d-cache-0.overallMisses::total",

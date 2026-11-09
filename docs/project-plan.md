@@ -17,11 +17,15 @@ The initial comparison is within one CPython release. It cannot by itself establ
 | 4. Hardware sweeps | Change one predictor or cache parameter at a time, rerunning the same engine and workload matrix. | The planned matrix is complete, or exclusions have documented reasons. |
 | 5. Analysis | Compute relative performance and hardware counters, check uncertainty and correctness, and explain likely mechanisms. | Reproducible tables/figures and a written discussion of findings and limits. |
 
+## Status
+
+- 2026-11-06: Phase 0 started. gem5 pinned and containerized; SE smoke run of a static C workload accepted (see D2). Next: cross-compile CPython for x86-64, run a deterministic Python script in SE, then test tail-call and JIT builds.
+
 ## First implementation slice
 
-1. Pick a Linux x86-64 CPython revision and a compatible gem5 revision; record exact commit hashes.
+1. Pick a Linux x86-64 CPython revision and a compatible gem5 revision; record exact commit hashes. *(gem5 done: D2. CPython open: D1.)*
 2. Select the compiler version that supports both tail-call and JIT builds. Keep normal CPython C compilation flags identical across variants where their build requirements allow it.
-3. Use a tiny deterministic, mostly CPU-bound Python program to test gem5 syscall emulation first. Confirm its printed result, exit status, and stats file.
+3. Use a tiny deterministic, mostly CPU-bound Python program to test gem5 syscall emulation first. *(A static C smoke program passes; Python not yet run.)* Confirm its printed result, exit status, and stats file.
 4. Build tail-call and JIT variants, then verify that the requested mode is active. For JIT, find evidence that the timed code reached compiled execution.
 5. Decide whether syscall emulation is sufficient; if not, document the gap and evaluate full-system simulation before scaling up.
 
