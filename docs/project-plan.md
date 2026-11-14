@@ -19,14 +19,15 @@ The initial comparison is within one CPython release. It cannot by itself establ
 
 ## Status
 
+- 2026-11-13: CPython 3.15.2 cross-built (static x86-64) as `default`, `tailcall`, and `jit` variants with clang 21.1.8 (D1, D3, D4). All four engine configurations pass the Python smoke workload in gem5 SE on the O3 baseline, and the JIT is shown executing in the hot loop. Phase 0 remaining: define the measured region (ROI markers or startup subtraction), decide whether SE is sufficient, and record per-engine feasibility notes. Next: Phase 2 benchmark selection, limited by the missing modules (D5).
 - 2026-11-06: Phase 0 started. gem5 pinned and containerized; SE smoke run of a static C workload accepted (see D2). Next: cross-compile CPython for x86-64, run a deterministic Python script in SE, then test tail-call and JIT builds.
 
 ## First implementation slice
 
-1. Pick a Linux x86-64 CPython revision and a compatible gem5 revision; record exact commit hashes. *(gem5 done: D2. CPython open: D1.)*
-2. Select the compiler version that supports both tail-call and JIT builds. Keep normal CPython C compilation flags identical across variants where their build requirements allow it.
-3. Use a tiny deterministic, mostly CPU-bound Python program to test gem5 syscall emulation first. *(A static C smoke program passes; Python not yet run.)* Confirm its printed result, exit status, and stats file.
-4. Build tail-call and JIT variants, then verify that the requested mode is active. For JIT, find evidence that the timed code reached compiled execution.
+1. Pick a Linux x86-64 CPython revision and a compatible gem5 revision; record exact commit hashes. *(gem5: D2. CPython: D1.)*
+2. *(Done for feasibility: D3.)* Select the compiler version that supports both tail-call and JIT builds. Keep normal CPython C compilation flags identical across variants where their build requirements allow it.
+3. Use a tiny deterministic, mostly CPU-bound Python program to test gem5 syscall emulation first. *(Done: `benchmarks/python-smoke/` passes for every engine.)* Confirm its printed result, exit status, and stats file.
+4. *(Done for the smoke workload: D4.)* Build tail-call and JIT variants, then verify that the requested mode is active. For JIT, find evidence that the timed code reached compiled execution.
 5. Decide whether syscall emulation is sufficient; if not, document the gap and evaluate full-system simulation before scaling up.
 
 ## Outputs to keep in Git

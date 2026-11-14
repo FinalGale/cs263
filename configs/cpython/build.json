@@ -1,0 +1,54 @@
+{
+  "name": "cpython-build-v0",
+  "status": "proposal",
+  "note": "Feasibility build matrix (D1, D3, D4 in docs/decisions.md). Every variant shares the source, toolchain, common configure options, and environment; only 'variants.<name>.configure' differs.",
+  "cpython": {
+    "repo": "https://github.com/python/cpython.git",
+    "tag": "v3.15.2",
+    "commit": "5e58eaad7c58df58dfa8ea549c87996e01dd1077",
+    "source_dir": "external/cpython"
+  },
+  "image": "cs263-cpython-build:llvm21.1.8",
+  "target": "x86_64-linux-gnu",
+  "build_triple": "aarch64-linux-gnu",
+  "toolchain": {
+    "cc": "clang --target=x86_64-linux-gnu",
+    "cxx": "clang++ --target=x86_64-linux-gnu",
+    "ar": "llvm-ar",
+    "ranlib": "llvm-ranlib",
+    "readelf": "llvm-readelf",
+    "linker": "GNU ld (binutils-x86-64-linux-gnu, clang default for this target)"
+  },
+  "common_configure": [
+    "--host=x86_64-linux-gnu",
+    "--build=aarch64-linux-gnu",
+    "--disable-shared",
+    "--without-ensurepip",
+    "--disable-test-modules",
+    "--without-pydebug"
+  ],
+  "common_env": {
+    "LDFLAGS": "-static",
+    "MODULE_BUILDTYPE": "static"
+  },
+  "config_site": {
+    "ac_cv_file__dev_ptmx": "yes",
+    "ac_cv_file__dev_ptc": "no",
+    "ac_cv_buggy_getaddrinfo": "no"
+  },
+  "optimization_policy": "CPython default OPT (-DNDEBUG -g -O3 -Wall); PGO and LTO disabled for every variant (cannot run PGO training when cross-compiling, and LTO is off to keep code layout comparable).",
+  "variants": {
+    "default": {
+      "description": "Specializing interpreter, default dispatch (computed gotos with clang).",
+      "configure": []
+    },
+    "tailcall": {
+      "description": "Specializing interpreter, tail-call dispatch.",
+      "configure": ["--with-tail-call-interp"]
+    },
+    "jit": {
+      "description": "JIT-capable build, JIT off by default; enable at runtime with PYTHON_JIT=1.",
+      "configure": ["--enable-experimental-jit=yes-off"]
+    }
+  }
+}

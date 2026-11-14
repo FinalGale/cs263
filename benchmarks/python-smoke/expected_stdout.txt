@@ -1,0 +1,1 @@
+collatz limit=2000 total_steps=134100 longest=1161 steps=181

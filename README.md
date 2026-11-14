@@ -14,7 +14,7 @@ The primary outcome is an explanation of _why_ performance differs: branch behav
 
 ## Current status
 
-Phase 0 (feasibility) in progress. A pinned gem5 v26.0.0.0 container builds and runs: a static x86-64 C smoke workload completes under syscall emulation with verified output and statistics. No CPython build, engine comparison, or benchmark result exists yet. The baseline hardware in `configs/hardware/baseline.json` is a proposal.
+Phase 0 (feasibility) in progress. A pinned gem5 v26.0.0.0 container simulates an x86-64 O3 core under syscall emulation. CPython 3.15.2 is cross-built as static x86-64 `default`, `tailcall`, and `jit` variants with clang 21.1.8, and all four engine configurations (`default`, `tailcall`, `jit-off`, `jit-on`) pass a Python smoke workload in gem5, with the JIT shown executing in the hot loop. No benchmark result exists yet: the smoke workload includes startup and a probe in its hot loop, so its engine ratios are feasibility checks, not findings. The baseline hardware in `configs/hardware/baseline.json` is a proposal.
 
 ## Quick start
 
@@ -25,7 +25,16 @@ scripts/run_gem5.py --label smoke-collatz --binary build/benchmarks/smoke/collat
     --expected-stdout benchmarks/smoke/expected_stdout.txt -- 20000
 ```
 
-See [docker/gem5/README.md](docker/gem5/README.md) for pinned inputs and limits. Runs land in `results/raw/<run_id>/` (not committed) with a `manifest.json`.
+CPython engines (about 2 min per variant) and the four-engine Python smoke run (about 15 min, in parallel):
+
+```sh
+docker build -t cs263-cpython-build:llvm21.1.8 docker/cpython-build
+scripts/build_cpython.sh default tailcall jit
+scripts/run_python_smoke.sh o3
+analysis/summarize_runs.py results/raw/*-pysmoke-*-o3
+```
+
+See [docker/gem5/README.md](docker/gem5/README.md) and [docker/cpython-build/README.md](docker/cpython-build/README.md) for pinned inputs and limits. Runs land in `results/raw/<run_id>/` (not committed) with a `manifest.json`.
 
 ## References
 
