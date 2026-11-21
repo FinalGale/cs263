@@ -9,6 +9,7 @@ The primary outcome is an explanation of _why_ performance differs: branch behav
 - [Project plan](docs/project-plan.md): milestones and deliverables.
 - [Experiment design](docs/experiment-design.md): comparisons, controls, measurements, and feasibility gates.
 - [Decision log](docs/decisions.md): choices that still need evidence or a team decision.
+- [Phase 0 report](report/report.tex): build with `make report` (see [Report](#report)).
 - [Agent instructions](AGENTS.md): rules for reproducible work in this repository.
 - [Repository skills](.agents/skills/): focused workflows for CPython builds, gem5 runs, result analysis, debugging, and verification.
 
@@ -34,7 +35,17 @@ scripts/run_python_smoke.sh o3
 analysis/summarize_runs.py results/raw/*-pysmoke-*-o3
 ```
 
-See [docker/gem5/README.md](docker/gem5/README.md) and [docker/cpython-build/README.md](docker/cpython-build/README.md) for pinned inputs and limits. Runs land in `results/raw/<run_id>/` (not committed) with a `manifest.json`.
+See [docker/gem5/README.md](docker/gem5/README.md) and [docker/cpython-build/README.md](docker/cpython-build/README.md) for pinned inputs and limits.
+
+## Report
+
+`make report` builds `build/report/report.pdf` from saved runs. It needs Python 3.10+ and a TeX distribution with `latexmk`.
+
+1. Creates `.venv/` with the pinned libraries in `analysis/requirements.txt` (matplotlib 3.10.9 and its dependencies).
+2. Runs `analysis/report_assets.py`. It reads the runs listed in `analysis/report_runs.json` and refuses to build if any run is missing, has the wrong engine, or fails its required checks. It then writes figures, LaTeX tables, and number macros to `build/report/generated/`.
+3. Compiles `report/report.tex` with `latexmk`. The report types no measured values; every number comes from the generated macros.
+
+`results/raw/` is not committed, so the report builds only where those runs exist. Rebuilding from the same runs gives a byte-identical PDF. Runs land in `results/raw/<run_id>/` (not committed) with a `manifest.json`.
 
 ## References
 

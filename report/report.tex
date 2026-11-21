@@ -1,0 +1,158 @@
+% CS 263 Phase 0 feasibility report.
+% Build with `make report` from the repository root. Every number comes from
+% build/report/generated/, written by analysis/report_assets.py from the runs
+% listed in analysis/report_runs.json; this file types no measured values.
+\documentclass[11pt]{article}
+
+% Reproducible PDF: no build timestamp or random trailer ID.
+\pdfinfoomitdate=1
+\pdftrailerid{}
+\pdfsuppressptexinfo=-1
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\setlist{itemsep=2pt,topsep=4pt}
+
+% Generated assets, relative to report/ (latexmk runs with -cd).
+\providecommand{\GeneratedDir}{../build/report/generated}
+\input{\GeneratedDir/numbers.tex}
+
+\title{CPython Engines on gem5: Phase 0 Feasibility Report}
+\author{CS 263 project}
+\date{}
+
+\begin{document}
+\maketitle
+
+\noindent CPython \CPythonTag{} runs in gem5 under all four engine configurations, and the JIT demonstrably executes in the simulated hot loop.
+On a small smoke workload, the tail-call interpreter took \CycleSavingPctTailCall\% fewer cycles than the default interpreter and the JIT \CycleSavingPctJitOn\% fewer.
+These are single feasibility runs, not findings: startup is included and a JIT probe sits inside the measured loop (Section~\ref{sec:limits}).
+
+\section{Setup}
+
+Every engine is built from one CPython commit with one compiler and runs on the same simulated x86-64 core.
+gem5 runs natively in an arm64 container on Apple silicon and simulates x86-64.
+
+\begin{table}[H]
+\centering\small
+\input{\GeneratedDir/tab-setup.tex}
+\caption{Pinned inputs.}
+\end{table}
+
+\paragraph{Engine configurations.} Three builds give four configurations:
+\begin{itemize}
+  \item \emph{default}: specializing interpreter, computed-goto dispatch;
+  \item \emph{tail-call}: configured with \texttt{-{}-with-tail-call-interp};
+  \item \emph{JIT off} and \emph{JIT on}: one binary configured with \texttt{-{}-enable-experimental-jit=yes-off}, run with \texttt{PYTHON\_JIT=0} or \texttt{PYTHON\_JIT=1}.
+\end{itemize}
+
+\paragraph{Workload.} A Python Collatz loop over 1--2000 (\InnerIterations{} inner iterations) whose output line is checked against an independent C implementation.
+The guest environment holds only two variables: \texttt{PYTHON\_JIT} and \texttt{PYTHONHASHSEED=0}.
+
+\section{Feasibility by engine}
+
+All four configurations pass every check: gem5 exited normally, the guest exited 0, the output matched, and all required counters were recorded.
+The engine mode was confirmed from inside the guest, not inferred from the build (Table~\ref{tab:feas}).
+
+\begin{table}[H]
+\centering\small
+\input{\GeneratedDir/tab-feasibility.tex}
+\caption{Per-engine checks and mode evidence.}
+\label{tab:feas}
+\end{table}
+
+\paragraph{The JIT works under syscall emulation.} gem5 ignores the \texttt{mprotect} call the JIT uses to make its code executable (\MprotectJit{} warnings in the JIT run, \MprotectOther{} in the default run).
+Even so, \JitActiveJitOn{} of \InnerIterations{} hot-loop iterations (\JitActivePct\%) ran inside JIT code in gem5, the same count as under Docker's amd64 emulation outside gem5.
+
+\section{Results}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{\GeneratedDir/fig-relative.pdf}
+\caption{Tail-call saves cycles; the JIT saves instructions. Whole run relative to the default interpreter (default $=1.00$), O3 baseline, one run each.}
+\label{fig:relative}
+\end{figure}
+
+The tail-call interpreter runs nearly the same instructions as default (\RelInstsTailCall) but needs fewer cycles (\RelCyclesTailCall).
+That is consistent with its \BrCutPctTailCall\% fewer branch mispredictions (Table~\ref{tab:counters}); the mechanism is a proposal, not yet tested.
+The JIT's gain comes mostly from running fewer instructions (\RelInstsJitOn), at lower IPC.
+The JIT-capable binary with the JIT off runs \InstExtraPctJitOff\% more instructions than default for about the same cycles.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{\GeneratedDir/fig-startup.pdf}
+\caption{Startup is about \StartupMeanM M instructions in every engine, \StartupShareMin--\StartupShareMax\% of each run. Startup measured with input 1 on gem5's atomic CPU; workload $=$ total minus startup.}
+\label{fig:startup}
+\end{figure}
+
+The JIT shrinks the workload from \WorkMDefault M to \WorkMJitOn M instructions (\JitWorkSavingPct\% fewer) while startup is unchanged.
+The subtraction relies on O3 and the atomic CPU retiring the same instruction stream: \InstStreamNote.
+Startup cycles on O3 were not measured, so cycles cannot be split the same way.
+
+\begin{table}[H]
+\centering\small
+\input{\GeneratedDir/tab-counters.tex}
+\caption{Engine counters on the O3 baseline.}
+\label{tab:counters}
+\end{table}
+
+\section{C smoke test: branch predictor sweep}
+
+Changing one hardware parameter works as intended.
+On a static C Collatz loop, resizing the predictor's global table moved cycles by at most \CSweepMaxDeltaPct\%.
+The loop's key branch tests whether a number is odd, which is close to random, so \CSweepMPKIMin--\CSweepMPKIMax{} mispredictions per 1k instructions remain at every size.
+
+\begin{table}[H]
+\centering\small
+\input{\GeneratedDir/tab-sweep.tex}
+\caption{One-factor sweep of \texttt{globalPredictorSize}. Every run executed exactly \CSweepInsts{} instructions.}
+\end{table}
+
+Repeating the baseline reproduced an earlier run's simulated time to the tick (\CBaselineTicks{} ticks), and halving the L1 instruction cache gave the same tick count.
+
+\section{Limits}
+\label{sec:limits}
+
+The engine ratios above show the pipeline works; they do not yet measure the engines.
+\begin{itemize}
+  \item \textbf{The probe is in the measured loop.} Every engine calls \texttt{sys.\_jit.is\_active()} on each hot-loop iteration. That adds about \ProbeOverheadM M instructions to the default run (\NoProbeInstsM M without it, \ProbeInstsM M with it), so the ratios partly measure that builtin call.
+  \item \textbf{Startup is included.} Interpreter startup is \StartupShareMin--\StartupShareMax\% of each run. No region-of-interest markers exist yet.
+  \item \textbf{One run per configuration.} Only the C smoke run has been repeated; sensitivity to small input or code-layout changes is untested.
+  \item \textbf{One tiny workload.} A single integer loop says nothing about object-heavy or call-heavy code.
+  \item \textbf{Hardware is a proposal.} The O3 baseline (decision D6) is not final, and no hardware sweep has been run on CPython.
+  \item \textbf{Missing stdlib modules.} zlib, \texttt{\_decimal}, \texttt{\_ctypes}, \texttt{\_ssl} and others are not built, because their libraries are not cross-built for x86-64.
+  \item \textbf{Builds are not release builds.} With \texttt{\BuildOpt} and no PGO or LTO, absolute speeds are below distributed CPython builds.
+  \item \textbf{Simulation is slow.} O3 runs at about \SimMIPS M simulated instructions per host second, \HostMinMin--\HostMinMax{} minutes per run here.
+\end{itemize}
+
+\section{Next steps}
+
+\begin{enumerate}
+  \item Add region-of-interest markers (\texttt{m5\_work\_begin}/\texttt{m5\_work\_end}, already in the gem5 image) so startup is excluded, and move the JIT probe out of the measured region.
+  \item Cross-build zlib, mpdecimal and libffi so standard benchmarks can import their modules.
+  \item Choose a small benchmark set with fixed inputs and expected outputs that fits a per-run simulation budget (decision D5).
+  \item Settle the baseline hardware and sweep values (D6), then run one-factor predictor and cache sweeps across all four engines.
+\end{enumerate}
+
+\appendix
+\section{Runs used}
+
+All numbers come from raw gem5 output and manifests under \texttt{results/raw/} (not committed), selected in \texttt{analysis/report\_runs.json}.
+The CPython engine runs were made from repository state \RunsCommit.
+
+\begin{table}[H]
+\centering\footnotesize
+\input{\GeneratedDir/tab-runs.tex}
+\end{table}
+
+\end{document}

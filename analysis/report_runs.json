@@ -1,0 +1,61 @@
+{
+  "note": "Runs that feed report/report.tex. Each set lists exact run directories under results/raw/ (not committed). analysis/report_assets.py refuses to build if a run is missing, has the wrong engine, or fails its required checks.",
+  "engines": {
+    "description": "Python smoke workload (benchmarks/python-smoke/collatz.py, input 2000) on the O3 baseline",
+    "required_checks": ["gem5_process_exit_zero", "simulator_exit_normal", "guest_exit_code_zero", "stats_present", "required_counters_present", "stdout_matches_expected"],
+    "baseline_engine": "cpython-default",
+    "runs": [
+      {"engine": "cpython-default", "label": "default", "run": "20261114T063642Z-pysmoke-default-o3"},
+      {"engine": "cpython-tailcall", "label": "tail-call", "run": "20261114T063642Z-pysmoke-tailcall-o3"},
+      {"engine": "cpython-jit-off", "label": "JIT off", "run": "20261114T063642Z-pysmoke-jit-off-o3"},
+      {"engine": "cpython-jit-on", "label": "JIT on", "run": "20261114T063642Z-pysmoke-jit-on-o3"}
+    ]
+  },
+  "startup": {
+    "description": "Same workload with input 1 on the diagnostic AtomicSimpleCPU: instruction count of interpreter startup. Rejected in their manifests only because the atomic CPU has no branch-predictor counters.",
+    "required_checks": ["gem5_process_exit_zero", "simulator_exit_normal", "guest_exit_code_zero", "stats_present"],
+    "runs": [
+      {"engine": "cpython-default", "run": "20261114T064011Z-pysmoke-default-atomic-limit1"},
+      {"engine": "cpython-tailcall", "run": "20261114T064011Z-pysmoke-tailcall-atomic-limit1"},
+      {"engine": "cpython-jit-off", "run": "20261114T064011Z-pysmoke-jit-off-atomic-limit1"},
+      {"engine": "cpython-jit-on", "run": "20261114T064011Z-pysmoke-jit-on-atomic-limit1"}
+    ]
+  },
+  "same_stream_atomic": {
+    "description": "Input 2000 on the atomic CPU: checks that O3 and atomic retire the same instruction count, which the startup subtraction relies on.",
+    "required_checks": ["gem5_process_exit_zero", "simulator_exit_normal", "guest_exit_code_zero", "stats_present", "stdout_matches_expected"],
+    "runs": [
+      {"engine": "cpython-default", "run": "20261114T063642Z-pysmoke-default-atomic"},
+      {"engine": "cpython-tailcall", "run": "20261114T063642Z-pysmoke-tailcall-atomic"},
+      {"engine": "cpython-jit-off", "run": "20261114T063642Z-pysmoke-jit-off-atomic"},
+      {"engine": "cpython-jit-on", "run": "20261114T063642Z-pysmoke-jit-on-atomic"}
+    ]
+  },
+  "no_probe": {
+    "description": "Default engine on O3 before the JIT probe was moved into the hot loop (workload otherwise identical).",
+    "required_checks": ["gem5_process_exit_zero", "simulator_exit_normal", "guest_exit_code_zero", "stats_present", "required_counters_present", "stdout_matches_expected"],
+    "runs": [
+      {"engine": "cpython-default", "run": "20261114T062241Z-pysmoke-default"}
+    ]
+  },
+  "c_predictor_sweep": {
+    "description": "Static C Collatz smoke (benchmarks/smoke, input 20000), one-factor sweep of branch_predictor.conditional.params.globalPredictorSize",
+    "required_checks": ["gem5_process_exit_zero", "simulator_exit_normal", "guest_exit_code_zero", "stats_present", "required_counters_present", "stdout_matches_expected"],
+    "baseline_run": "20261114T060302Z-smoke-collatz-baseline",
+    "baseline_value": 8192,
+    "runs": [
+      {"run": "20261114T060302Z-smoke-collatz-gpred256"},
+      {"run": "20261114T060302Z-smoke-collatz-gpred1024"},
+      {"run": "20261114T060302Z-smoke-collatz-baseline"},
+      {"run": "20261114T060302Z-smoke-collatz-gpred32768"}
+    ]
+  },
+  "c_repeat": {
+    "description": "Earlier baseline and L1I=16KiB runs of the C smoke, used for the repeatability statement.",
+    "required_checks": ["gem5_process_exit_zero", "simulator_exit_normal", "guest_exit_code_zero", "stats_present", "required_counters_present", "stdout_matches_expected"],
+    "runs": [
+      {"run": "20261107T015213Z-smoke-collatz"},
+      {"run": "20261107T015247Z-smoke-collatz-l1i16k"}
+    ]
+  }
+}
